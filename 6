@@ -1,0 +1,91 @@
+2import csv
+3import random
+4import math 5
+6def loadCsv(filename):
+7lines = csv.reader(open(filename, "r"))
+8dataset = list(lines)
+9for i in range(len(dataset)):
+10dataset[i] = [float(x) for x in dataset[i]]
+11return dataset 12
+13def splitDataset(dataset, splitRatio):
+14trainSize = int(len(dataset) * splitRatio)
+15trainSet = []
+16copy = list(dataset)
+17while len(trainSet) < trainSize:
+18index = random.randrange(len(copy))
+19trainSet.append(copy.pop(index))
+20return [trainSet, copy] 21
+22def separateByClass(dataset):
+23separated = {}
+24for i in range(len(dataset)):
+25vector = dataset[i]
+26if (vector[-1] not in separated):
+27separated[vector[-1]] = []
+28separated[vector[-1]].append(vector)
+29return separated 30
+31def mean(numbers):
+32return sum(numbers)/float(len(numbers)) 33
+34def stdev(numbers):
+35avg = mean(numbers)
+36variance = sum([pow(x-avg,2) for x in numbers])/float(len(numbers)-1)
+37return math.sqrt(variance) 38
+39def summarize(dataset):
+40summaries = [(mean(attribute), stdev(attribute)) for attribute in zip(*dataset)]
+41del summaries[-1]
+42return summaries 43
+44def summarizeByClass(dataset):
+45separated = separateByClass(dataset)
+46summaries = {}
+47for classValue, instances in separated.items():
+48summaries[classValue] = summarize(instances)
+49return summaries 50
+51def calculateProbability(x, mean, stdev):
+52exponent = math.exp(-(math.pow(x-mean,2)/(2*math.pow(stdev,2))))
+53return (1 / (math.sqrt(2*math.pi) * stdev)) * exponent 54
+55def calculateClassProbabilities(summaries, inputVector):
+56probabilities = {}
+57for classValue, classSummaries in summaries.items():
+58probabilities[classValue] = 1
+59for i in range(len(classSummaries)):
+
+60mean, stdev = classSummaries[i]
+61x = inputVector[i]
+62probabilities[classValue] *= calculateProbability(x, mean, stdev)
+63return probabilities 64
+65def predict(summaries, inputVector):
+66probabilities = calculateClassProbabilities(summaries, inputVector)
+67bestLabel, bestProb = None, -1
+68for classValue, probability in probabilities.items():
+69if bestLabel is None or probability > bestProb:
+70bestProb = probability
+71bestLabel = classValue
+72return bestLabel 73
+74def getPredictions(summaries, testSet):
+75predictions = []
+76for i in range(len(testSet)):
+77result = predict(summaries, testSet[i])
+78predictions.append(result)
+79return predictions 80
+81def getAccuracy(testSet, predictions):
+82correct = 0
+83for i in range(len(testSet)):
+84#print(testSet[i][-1]," ",predictions[i])
+85if testSet[i][-1] == predictions[i]:
+86correct += 1
+87return (correct/float(len(testSet))) * 100.0 88
+89def main():
+90filename = 'naviebayes.csv'
+91splitRatio = 0.67
+92dataset = loadCsv(filename)
+93trainingSet,testSet=splitDataset(dataset, splitRatio)
+94#trainingSet = dataset
+95	#testSet=[[8.0,183.0,64.0,0.0,0.0,23.3,0.672,32.0]]
+96	print(f'Split {len(dataset)} rows into train={len(trainingSet)} and test={len(test 97
+98# prepare model
+99summaries = summarizeByClass(trainingSet)
+100# test model
+101predictions = getPredictions(summaries, testSet)
+102accuracy = getAccuracy(testSet, predictions)
+103print('Accuracy: {0}%'.format(accuracy))
+104print('Prediction:{0}'.format(predictions))
+main() 
